@@ -2,12 +2,9 @@ package com.savich.maksim;
 
 import com.savich.maksim.model.Customer;
 import com.savich.maksim.model.Payment;
-import com.savich.maksim.repository.CustomerRepository;
 import com.savich.maksim.repository.PaymentRepository;
-import com.savich.maksim.service.CustomerService;
 
-import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.SQLException;
 import java.time.LocalDate;
 
 public class Main {
