@@ -1,11 +1,15 @@
 package com.savich.maksim.repository;
 
+import com.savich.maksim.model.Customer;
 import com.savich.maksim.model.Payment;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Optional;
 
 public class PaymentRepository {
 
@@ -25,7 +29,7 @@ public class PaymentRepository {
         try (PreparedStatement prepareStatement = ConnectionHolder.getConnection().prepareStatement("INSERT INTO payments(amount, currency, customer_id) VALUES(?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             prepareStatement.setBigDecimal(1, payment.getAmount());
             prepareStatement.setString(2, payment.getCurrency());
-            prepareStatement.setInt(3, payment.getCustomer().getId());
+            prepareStatement.setInt(3, payment.getCustomer() != null ? payment.getCustomer().getId() : 1);
             prepareStatement.execute();
 
             try (ResultSet generatedKeys = prepareStatement.getGeneratedKeys()) {
@@ -40,19 +44,34 @@ public class PaymentRepository {
         }
     }
 
-    public Payment getById(int id) throws SQLException {
-        try (PreparedStatement prepareStatement = ConnectionHolder.getConnection().prepareStatement("SELECT id, amount, currency, customer_id FROM payments WHERE id = ?")) {
+    public Optional<Payment> getById(int id) throws SQLException {
+        try (PreparedStatement prepareStatement = ConnectionHolder.getConnection().prepareStatement("SELECT p.id, p.amount, p.currency, p.customer_id, c.name, c.surname, " +
+                                                                                                                "c.age, c.address, c.date_of_birth " +
+                                                                                                            "FROM payments p " +
+                                                                                                            "INNER JOIN customers c ON p.customer_id = c.id " +
+                                                                                                        "WHERE p.id = ?")) {
             prepareStatement.setInt(1, id);
             ResultSet result = prepareStatement.executeQuery();
-            Payment payment = null;
             if (result.next()) {
-                payment = new Payment();
+                Payment payment = new Payment();
                 payment.setId(result.getInt("id"));
                 payment.setAmount(result.getBigDecimal("amount"));
                 payment.setCurrency(result.getString("currency"));
-                payment.setCustomer(CustomerRepository.getInstance().getById(result.getInt("customer_id")));
+                if (result.getString("customer_id") != null) {
+                    Customer customer = new Customer();
+                    customer.setId((result.getInt("customer_id")));
+                    customer.setName((result.getString("name")));
+                    customer.setSurname((result.getString("surname")));
+                    customer.setAge(result.getInt("age"));
+                    customer.setAddress(result.getString("address"));
+                    customer.setDateOfBirth(Instant.ofEpochMilli(result.getDate("date_of_birth").getTime())
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate());
+                    payment.setCustomer(customer);
+                }
+                return Optional.of(payment);
             }
-            return payment;
+            return Optional.empty();
         }
     }
 }

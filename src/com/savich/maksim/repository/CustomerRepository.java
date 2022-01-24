@@ -5,6 +5,7 @@ import com.savich.maksim.model.Customer;
 import java.sql.*;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Optional;
 
 public class CustomerRepository {
 
@@ -41,13 +42,12 @@ public class CustomerRepository {
         }
     }
 
-    public Customer getById(int id) throws SQLException {
+    public Optional<Customer> getById(int id) throws SQLException {
         try (PreparedStatement prepareStatement = ConnectionHolder.getConnection().prepareStatement("SELECT id, name, surname, age, address, date_of_birth FROM customers WHERE id = ?")) {
             prepareStatement.setInt(1, id);
             ResultSet result = prepareStatement.executeQuery();
-            Customer customer = null;
             if (result.next()) {
-                customer = new Customer();
+                Customer customer = new Customer();
                 customer.setId(result.getInt("id"));
                 customer.setName(result.getString("name"));
                 customer.setSurname(result.getString("surname"));
@@ -56,8 +56,9 @@ public class CustomerRepository {
                 customer.setDateOfBirth(Instant.ofEpochMilli(result.getDate("date_of_birth").getTime())
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate());
+                return Optional.of(customer);
             }
-            return customer;
+            return Optional.empty();
         }
     }
 }
