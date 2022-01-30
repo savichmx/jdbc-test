@@ -2,13 +2,26 @@ package com.savich.maksim.model;
 
 import java.time.LocalDate;
 
+import com.savich.maksim.annotation.Column;
+
 public class Customer {
 
+    @Column("id")
     private Integer id;
+
+    @Column("name")
     private String name;
+
+    @Column("surname")
     private String surname;
+
+    @Column("age")
     private Integer age;
+
+    @Column("address")
     private String address;
+
+    @Column("date_of_birth")
     private LocalDate dateOfBirth;
 
     public Integer getId() {
